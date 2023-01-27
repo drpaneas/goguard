@@ -18,21 +18,33 @@ GoGuard is a tool that helps you protect your Go projects from known CVE threats
 To install GoGuard, you need to have Go installed on your machine. Once you have Go, you can install GoGuard by running the following command:
 
 ```bash
-go install github.com/user/GoGuard
+go install github.com/drpaneas/GoGuard
 ```
 
 ## Usage
 
-To use GoGuard, you can run the following command:
+To use GoGuard, supports 3 scan modes
+
+1. Scan using CVE ID
+2. Scan using GO Vulnerability ID
+3. Scan using a specific Go package and its version
+
+you can run the following command:
 
 ```bash
-Usage: ./goguard <GitHub-Repo-URL> <CVE ID>
+Usage: ./goguard <mode> <GitHub-Repo-URL> <CVE ID>
+ -- Modes: cve, go, pkg --
+  Example: goguard cve <GitHub-Repo-URL> <CVE ID>)
+  Example: goguard go <GitHub-Repo-URL> <GOVULN ID>)
+  Example: goguard pkg <GitHub-Repo-URL> <VULNPKG> <VULNVER>)
 ```
 
 For example:
 
 ```bash
-goguard https://github.com/user/repo CVE-2021-4238
+goguard cve https://github.com/user/repo CVE-2021-4238
+goguard go https://github.com/user/repo GO-2022-0411
+goguard pkg https://github.com/user/repo 'goutils' '1.0'
 ```
 
 This command will check if the GitHub repository `https://github.com/user/repo` is vulnerable against the CVE `CVE-2021-4238`.
@@ -43,6 +55,7 @@ You can also use the --debug parameter to see more detailed information about th
 
 * GoGuard is currently in **beta** version!
 * GoGuard only check the vulnerabilities mentioned in the `go.sum` file.
+* The pkg mode was added so you can check of embargoed CVEs (private) that are not yet publicly exposed.
 
 ## Disclaimer
 

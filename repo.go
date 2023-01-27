@@ -77,8 +77,9 @@ func isVulnerable(repoURL, vulnPackage, fixedVersion string) error {
 		// Check if the user's version is vulnerable
 		if semver.Compare(version, fixedVersion) < 0 { // version < fixedVersion
 			isAffected = true
-			break
 		}
+
+		break
 	}
 
 	if !isAffected {

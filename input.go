@@ -8,27 +8,61 @@ import (
 	"strings"
 )
 
+// scanMode is the current mode of the scan
+type scanMode int
+
+const (
+	CVEMode scanMode = iota
+	GoMode
+	PKGMode
+	ErrorMode
+)
+
+func getMode() (scanMode, error) {
+	if len(os.Args) < 2 {
+		return ErrorMode, errors.New("no mode specified")
+	}
+
+	mode := os.Args[1] // get the mode from the command line
+
+	switch mode {
+	case "cve":
+		return CVEMode, nil
+	case "go":
+		return GoMode, nil
+	case "pkg":
+		return PKGMode, nil
+	default:
+		fmt.Println("Error: unsupported mode specified")
+		return ErrorMode, errors.New("invalid mode specified")
+	}
+}
+
 // getUserInput gets the user input from the command line and validates it
 // is returns the CVE ID and the GitHub URL of the Go project as strings and an error if there is one
 // it also prints the usage message if the user didn't provide the required arguments
 // it also prints an error message if the user provided an invalid CVE ID or GitHub URL that is not a GitHub URL
-func getUserInput() (string, string, error) {
+func getUserInputCVEMode() (string, string, error) {
+	// this is CVEState: ./goguard cve <GitHub-Repo-URL> <CVE ID>
+	// this is GoState:  ./goguard go <GitHub-Repo-URL> <GOVULN ID>
+	// this is PKGState: ./goguard pkg <GitHub-Repo-URL> <VULNPKG> <VULNVER>
+
 	var repoURL, cve string
 	var err error
 
 	// Check if the user has provided the required arguments
-	if len(os.Args) < 3 {
-		err = errors.New(fmt.Sprint("Usage: ./", name, " <GitHub-Repo-URL> <CVE ID>"))
+	if len(os.Args) < 4 {
+		err = errors.New(fmt.Sprint("Usage: ", name, " cve <GitHub-Repo-URL> <CVE ID>"))
 		return repoURL, cve, err
 	}
 
 	// Get the user input and validate it
-	repoURL, err = validateURL(os.Args[1])
+	repoURL, err = validateURL(os.Args[2])
 	if err != nil {
 		return repoURL, cve, err
 	}
 
-	cve, err = validateCVE(os.Args[2])
+	cve, err = validateCVE(os.Args[3])
 	if err != nil {
 		return repoURL, cve, err
 	}
@@ -74,4 +108,67 @@ func validateCVE(cve string) (string, error) {
 	}
 
 	return cve, nil
+}
+
+func getUserInputGoMode() (string, string, error) {
+	// this is GoState:  ./goguard go <GitHub-Repo-URL> <GOVULN ID>
+
+	var repoURL, govuln string
+	var err error
+
+	// Check if the user has provided the required arguments
+	if len(os.Args) < 4 {
+		err = errors.New(fmt.Sprint("Usage: ", name, " go <GitHub-Repo-URL> <GOVULN ID>"))
+		return repoURL, govuln, err
+	}
+
+	// Get the user input and validate it
+	repoURL, err = validateURL(os.Args[2])
+	if err != nil {
+		return repoURL, govuln, err
+	}
+
+	govuln = os.Args[3]
+	re := regexp.MustCompile(`GO-[0-9]{4}-[0-9]+`)
+	match := re.FindAllString(string(govuln), -1)
+	if len(match) == 0 {
+		return repoURL, govuln, errors.New("no valid format for GOVULN ID. It must be in the format GO-YYYY-XXXX")
+	}
+
+	return repoURL, govuln, nil
+}
+
+func getUserInputPKGMode() (string, string, string, error) {
+	// this is PKGState: ./goguard pkg <GitHub-Repo-URL> <VULNPKG> <VULNVER>
+
+	var repoURL, vulnpkg, vulnver string
+	var err error
+
+	// Check if the user has provided the required arguments
+	if len(os.Args) < 5 {
+		err = errors.New(fmt.Sprint("Usage: ", name, " pkg <GitHub-Repo-URL> <VULNPKG> <VULNVER>"))
+		return repoURL, vulnpkg, vulnver, err
+	}
+
+	// Get the user input and validate it
+	repoURL, err = validateURL(os.Args[2])
+	if err != nil {
+		return repoURL, vulnpkg, vulnver, err
+	}
+
+	vulnpkg = os.Args[3]
+	vulnver = os.Args[4]
+
+	// Validate the version
+	if err != isValidGoSemver(vulnver) {
+		// Usually this happens because the version missing the "v" prefix
+		// so instead of v1.1.1 is 1.1.1
+		// Try to fix it by adding the "v" prefix and check again
+		vulnver = "v" + vulnver
+		if err != isValidGoSemver(vulnver) {
+			return repoURL, vulnpkg, vulnver, errors.New("invalid version format. It must be in the format v1.1.1")
+		}
+	}
+
+	return repoURL, vulnpkg, vulnver, nil
 }
