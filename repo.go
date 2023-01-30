@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"golang.org/x/mod/semver"
@@ -10,85 +11,128 @@ import (
 )
 
 func isVulnerable(repoURL, vulnPackage, fixedVersion string) error {
-	var isAffected bool // Assume the package is not vulnerable
-	var packageName, version string
-
-	// Replace with the link to the go.sum file on GitHub
-	// url := repoURL + "/raw/master/go.sum"
-	url := strings.TrimSuffix(repoURL, "/") + "/raw/master/go.sum"
+	// Replace with the link to the go.mod file on GitHub
+	// url := repoURL + "/raw/master/go.mod"
+	url := strings.TrimSuffix(repoURL, "/") + "/raw/master/go.mod"
 
 	response, err := http.Get(url)
 	if err != nil {
-		errMessage := fmt.Sprintf("Error while getting go.sum file: %s", err)
+		errMessage := fmt.Sprintf("Error while getting go.mod file: %s", err)
 		return errors.New(errMessage)
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			fmt.Printf("Error while closing go.sum file: %s", err)
+			fmt.Printf("Error while closing go.mod file: %s", err)
 		}
 	}(response.Body)
 
 	// If response is not 200, return error
 	if response.StatusCode != 200 {
-		errMessage := fmt.Sprintf("Error while getting go.sum file: %s", response.Status)
+		errMessage := fmt.Sprintf("Error while getting go.mod file: %s", response.Status)
 		return errors.New(errMessage)
 	}
 
 	contents, err := io.ReadAll(response.Body)
 	if err != nil {
-		errMessage := fmt.Sprintf("Error while reading go.sum file: %s", err)
+		errMessage := fmt.Sprintf("Error while reading go.mod file: %s", err)
 		return errors.New(errMessage)
 	}
 
-	lines := strings.Split(string(contents), "\n")
+	// Convert contents into io.Reader
+	r := strings.NewReader(string(contents))
 
-	// Iterate through each line in the go.sum file and look for the vulnPackage
-	for _, line := range lines {
-		if line == "" {
-			continue
-		}
-		parts := strings.Split(line, " ")
-		if len(parts) != 3 {
-			fmt.Printf("Skipping invalid line in go.sum file: %s\n", line)
-			continue
-		}
+	var pkgs, versions []string
 
-		packageName = parts[0]
-		version = strings.TrimSuffix(parts[1], "/go.mod")
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		line := scanner.Text()
 
-		// Check if the version is valid using the semver package
-		if !semver.IsValid(version) {
-			fmt.Printf("Skipping invalid version: %s", version)
-			continue
-		}
+		if strings.HasPrefix(line, "require (") {
+			for scanner.Scan() {
+				line = scanner.Text()
+				if strings.HasPrefix(line, ")") {
+					break
+				}
+				if !strings.HasPrefix(line, "\t") && !strings.HasPrefix(line, " ") {
+					continue
+				}
 
-		// Check if the user's package exists in the go.sum file (it can be part of)
-		if packageName != vulnPackage {
-			if !strings.Contains(packageName, vulnPackage) {
-				continue
+				f := strings.Fields(line)
+				pkgs = append(pkgs, f[0])
+				versions = append(versions, f[1])
+
+				if debug {
+					fmt.Printf("Require statement: %s %s\n", f[0], f[1])
+				}
+			}
+		} else if strings.HasPrefix(line, "replace (") {
+			for scanner.Scan() {
+				line = scanner.Text()
+				if strings.HasPrefix(line, ")") {
+					break
+				}
+				if !strings.HasPrefix(line, "  ") && !strings.HasPrefix(line, "\t") {
+					continue
+				}
+				// It should contain "=>" otherwise it's not a replace statement
+				if !strings.Contains(line, "=>") {
+					continue
+				}
+
+				// find where '=>' is and split the string there to get the package name and version number
+				// there should be the next two fields
+				f := strings.Split(line, "=>")
+
+				// if there is "\t" or " " in the package name, remove it
+				if strings.HasPrefix(f[0], "\t") {
+					f[0] = strings.TrimPrefix(f[0], "\t")
+				} else if strings.HasPrefix(f[0], " ") {
+					f[0] = strings.TrimPrefix(f[0], " ")
+				} else {
+					// if there is no "\t" or " " in the package name, it's not a valid replace statement
+					continue
+				}
+
+				// If you find something here, it's not a valid replace statement, that means there is already a package with the same name
+				// loop through the packages and see if there is a package with the same name as the one in the replace statement
+				// if there is, then change this one instead of appending it
+				// if there isn't, then append it
+				for i, pkg := range pkgs {
+					if pkg == f[0] {
+						pkgs[i] = f[0]
+						versions[i] = f[1]
+						continue
+					}
+				}
+
+				// if there is no package with the same name, append it
+				if debug {
+					fmt.Println("Replace statement: ", f[0], "=>", f[1])
+				}
+
+				pkgs = append(pkgs, f[0])
+				versions = append(versions, f[1])
 			}
 		}
-
-		if debug {
-			fmt.Printf("Found vulnerable package: %s\n", vulnPackage)
-		}
-
-		// Check if the user's version is vulnerable
-		if semver.Compare(version, fixedVersion) < 0 { // version < fixedVersion
-			isAffected = true
-		}
-
-		break
 	}
 
-	if !isAffected {
-		fmt.Printf("Package %s is not vulnerable (version %s is not less than %s)\n", vulnPackage, version, fixedVersion)
-		return nil
+	isPkgFound := false
+	// loop through all the packages and see if there is a any package that is 'vulnPackage'
+	for i, pkg := range pkgs {
+		if pkg == vulnPackage {
+			isPkgFound = true
+			// if there is, check if the version is less than the fixed version
+			if semver.Compare(versions[i], fixedVersion) < 0 {
+				// if it is, then it's vulnerable
+				fmt.Printf("[VULNERABLE] Package %s is vulnerable with version %s (is less than %s)\n", pkg, versions[i], fixedVersion)
+			} else {
+				fmt.Printf("[SAFE] Package %s is NOT vulnerable with version %s (patched version: %s)\n", pkg, versions[i], fixedVersion)
+			}
+		}
 	}
-
-	fmt.Printf("Vulnerable package %s found (version %s is less than %s). ", vulnPackage, version, fixedVersion)
-	fmt.Printf("Please update to version %s or higher!\n", fixedVersion)
+	if !isPkgFound {
+		fmt.Printf("[SAFE] Vulnerable Package %s is NOT found in go.mod file\n", vulnPackage)
+	}
 	return nil
-
 }

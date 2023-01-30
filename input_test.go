@@ -59,7 +59,7 @@ func TestValidateURL(t *testing.T) {
 }
 
 func TestGetUserInputCVEMode(t *testing.T) {
-	os.Args = []string{"./test", "https://github.com/user/repo", "CVE-2021-4238"}
+	os.Args = []string{"./test", "cve", "https://github.com/user/repo", "CVE-2021-4238"}
 	cve, repoURL, err := getUserInputCVEMode()
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
@@ -71,13 +71,13 @@ func TestGetUserInputCVEMode(t *testing.T) {
 		t.Errorf("Expected repoURL to be 'https://github.com/user/repo', but got '%s'", repoURL)
 	}
 
-	os.Args = []string{"./test", "this-is-not-a-url", "CVE-2021-4238"}
+	os.Args = []string{"./test", "cve", "this-is-not-a-url", "CVE-2021-4238"}
 	_, _, err = getUserInputCVEMode()
 	if err == nil {
 		t.Errorf("Expected error for invalid URL but got none")
 	}
 
-	os.Args = []string{"./test", "http://github.com/user/repo", "CVE-2021-4238"}
+	os.Args = []string{"./test", "cve", "http://github.com/user/repo", "CVE-2021-4238"}
 	cve, repoURL, err = getUserInputCVEMode()
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err)
@@ -89,13 +89,13 @@ func TestGetUserInputCVEMode(t *testing.T) {
 		t.Errorf("Expected repoURL to be 'https://github.com/user/repo', but got '%s'", repoURL)
 	}
 
-	os.Args = []string{"./test", "https://github.com/user/repo"}
+	os.Args = []string{"./test", "cve", "https://github.com/user/repo"}
 	_, _, err = getUserInputCVEMode()
 	if err == nil {
 		t.Errorf("Expected error for missing CVE but got none")
 	}
 
-	os.Args = []string{"./test", "https://github.com/user/repo", "not-a-cve"}
+	os.Args = []string{"./test", "cve", "https://github.com/user/repo", "not-a-cve"}
 	_, _, err = getUserInputCVEMode()
 	if err == nil {
 		t.Errorf("Expected error for invalid CVE but got none")
