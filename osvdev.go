@@ -32,7 +32,7 @@ func isGoVuln(cve string) (string, error) {
 	match := re.FindAllString(string(body), -1)
 
 	if len(match) == 0 {
-		return "", errors.New("couldn't find any Go vulnerability entry for this CVE")
+		return "", errors.New("[SKIP] Couldn't find any Go vulnerability entry for this CVE " + cve)
 	} else if len(match) > 1 {
 		// Check if there are multiple entries which are all of them identical
 		allSame := true
