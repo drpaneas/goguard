@@ -6,12 +6,12 @@ GoGuard is a tool that helps you protect your Go projects from known CVE threats
 
 ## How it works
 
-* You provide GoGuard with a valid CVE (e.g. CVE-2021-4238) and a GitHub repository of a Go project (e.g. <https://github.com/user/repo>).
+* You provide GoGuard with a valid CVE (e.g. CVE-2021-4238) and a GitHub repository of a Go project (e.g. `<https://github.com/user/repo>`).
 * GoGuard checks [NVD] (*National Vulnerability Database*) to see if the provided CVE exists.
 * If the CVE exists, GoGuard visits the [OSVDB] (*Open Source Vulnerability Database*) to find a mapping between the provided CVE and a Go vulnerability.
 * Using the information from the [OSVDB], GoGuard fetches the package name and the fixed version related to the Go vulnerability via the [Go Vulnerability Database].
-* Finally, GoGuard visits the GitHub repository and looks at the `go.sum` file. It searches for the package related to the Go vulnerability and compares the version found in the go.sum file with the fixed version reported by the [OSVDB].
-* If the package version in the `go.sum` file is older than the fixed version reported by the `OSVDB`, GoGuard informs the user that the GitHub repository is indeed vulnerable against the provided CVE.
+* Finally, GoGuard visits the GitHub repository and looks at the `go.mod` file. It searches for the package related to the Go vulnerability and compares the version found in the `go.mod` file with the fixed version reported by the [OSVDB].
+* If the package version in the `go.mod` file is older than the fixed version reported by the `OSVDB`, GoGuard informs the user that the GitHub repository is indeed vulnerable against the provided CVE.
 
 ## Installation
 
@@ -54,7 +54,7 @@ You can also use the --debug parameter to see more detailed information about th
 ## Note
 
 * GoGuard is currently in **beta** version!
-* GoGuard only check the vulnerabilities mentioned in the `go.sum` file.
+* GoGuard only check the vulnerabilities mentioned in the `go.mod` file.
 * The pkg mode was added so you can check of embargoed CVEs (private) that are not yet publicly exposed.
 
 ## Disclaimer
