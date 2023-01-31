@@ -125,14 +125,68 @@ func isVulnerable(repoURL, vulnPackage, fixedVersion string) error {
 			// if there is, check if the version is less than the fixed version
 			if semver.Compare(versions[i], fixedVersion) < 0 {
 				// if it is, then it's vulnerable
-				fmt.Printf("[VULNERABLE] Package %s is vulnerable with version %s (is less than %s)\n", pkg, versions[i], fixedVersion)
+				fmt.Printf("Direct dependency check: [VULNERABLE] Package %s is vulnerable with version %s (is less than %s)\n", pkg, versions[i], fixedVersion)
 			} else {
-				fmt.Printf("[SAFE] Package %s is NOT vulnerable with version %s (patched version: %s)\n", pkg, versions[i], fixedVersion)
+				fmt.Printf("Direct dependency check: [SAFE] Package %s is NOT vulnerable with version %s (patched version: %s)\n", pkg, versions[i], fixedVersion)
 			}
 		}
 	}
 	if !isPkgFound {
-		fmt.Printf("[SAFE] Vulnerable Package %s is NOT found in go.mod file\n", vulnPackage)
+		fmt.Printf("Direct dependency check: [SAFE] Vulnerable Package %s is NOT found in go.mod file\n", vulnPackage)
 	}
+
+	// Indirect dependency check
+
+	// First check the go.sum file
+	// If the vulnerable package is found in the go.sum file, then it's vulnerable and we will analyze this using the go mod graph command
+	isGoSumVulnerable, vulnGoSumList, err := checkSum(repoURL, vulnPackage, fixedVersion)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	if !isGoSumVulnerable {
+		fmt.Println("Indirect Dependency check: [SAFE] Vulnerable Package Version is NOT found in the go.sum file")
+		if debug {
+			for _, pkg := range vulnGoSumList {
+				fmt.Println(" * " + pkg)
+			}
+		}
+		return nil
+	}
+
+	// If we are here, it means that the vulnerable package is found in the go.sum file
+	// Analyze it with graph command
+
+	output, err := runModGraph(repoURL)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	isIndirectVulnerable, safeList, vulnList := checkIndirectVulnerability(output, vulnPackage, fixedVersion)
+	if !isIndirectVulnerable {
+		fmt.Println("If you see this, file a bug report")
+		fmt.Println("Indirect Dependency check: [SAFE] Vulnerable Package Version is NOT found in the dependency graph")
+		if debug {
+			for _, pkg := range safeList {
+				fmt.Println(" * " + pkg)
+			}
+		}
+		return nil
+	}
+
+	// Print the list of vulnerable packages
+	fmt.Println("Indirect Dependency check: [VULNERABLE] List of vulnerable packages:")
+	for _, pkg := range vulnGoSumList {
+		fmt.Println(" * Version:" + pkg)
+		for _, pkg2 := range vulnList {
+			if strings.Contains(pkg2, pkg) {
+				fmt.Println("   * " + pkg2)
+			}
+		}
+		fmt.Println("------")
+	}
+
 	return nil
 }
