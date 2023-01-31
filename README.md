@@ -11,15 +11,31 @@ GoGuard is a tool that helps you protect your Go projects from known CVE threats
 * If the CVE exists, GoGuard visits the [OSVDB] (*Open Source Vulnerability Database*) to find a mapping between the provided CVE and a Go vulnerability.
 * Using the information from the [OSVDB], GoGuard fetches the package name and the fixed version related to the Go vulnerability via the [Go Vulnerability Database].
 * Finally, GoGuard visits the GitHub repository and looks at the `go.mod` file. It searches for the package related to the Go vulnerability and compares the version found in the `go.mod` file with the fixed version reported by the [OSVDB].
-* If the package version in the `go.mod` file is older than the fixed version reported by the `OSVDB`, GoGuard informs the user that the GitHub repository is indeed vulnerable against the provided CVE.
+* This is considered a direct vulnerability check.
+* GoGuard goes one step further and checks for indirect vulnerabilities in the `go.sum` file as well. If there are any vulnerable versions coming from other packages, then GoGuard will inform the user about these as well.
+* To do that, it spins up an ephemeral Docker container and runs `go mod graph` to get the dependency graph of the project, against the vulnerable versions found in the `go sum` file.
+
+### How to fix a vulnerability
+
+* To fix a directly vulnerability, bump your `go.mod` file to the fixed version and run `go mod tidy`.
+
+* To fix all indirect vulnerabilities, (e.g. if the vulnerable pkg is `gopkg.in/yaml.v2` and the patched version `v2.4.0` then do:
+
+```bash
+go mod edit -replace gopkg.in/yaml.v2=gopkg.in/yaml.v2@v2.4.0
+go mod tidy
+```
+
 
 ## Installation
 
-To install GoGuard, you need to have Go installed on your machine. Once you have Go, you can install GoGuard by running the following command:
+1. To install GoGuard, you need to have Go installed on your machine. Once you have Go, you can install GoGuard by running the following command:
 
 ```bash
 go install github.com/drpaneas/GoGuard
 ```
+
+2. You also need docker installed, up and running.
 
 ## Usage
 
@@ -54,7 +70,6 @@ You can also use the --debug parameter to see more detailed information about th
 ## Note
 
 * GoGuard is currently in **beta** version!
-* GoGuard only check the vulnerabilities mentioned in the `go.mod` file.
 * The pkg mode was added so you can check of embargoed CVEs (private) that are not yet publicly exposed.
 
 ## Disclaimer
