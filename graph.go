@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"golang.org/x/mod/semver"
 	"io"
 	"net/http"
 	"os/exec"
 	"strings"
+
+	"golang.org/x/mod/semver"
 )
 
 func runModGraph(repoURL string) (string, error) {
@@ -83,14 +84,14 @@ func checkIndirectVulnerability(output, pkg, fixed string) (bool, []string, []st
 	return isVulnerable, safeList, vulnerableList
 }
 
-func checkSum(repoURL, vulnPackage, fixedVersion string) (bool, []string, error) {
+func checkSum(repoURL, branch, vulnPackage, fixedVersion string) (bool, []string, error) {
 	var isAffected bool // Assume the package is not vulnerable
 	var packageName, version string
 	var vulnPkgs []string
 
 	// Replace with the link to the go.sum file on GitHub
 	// url := repoURL + "/raw/master/go.sum"
-	url := strings.TrimSuffix(repoURL, "/") + "/raw/master/go.sum"
+	url := strings.TrimSuffix(repoURL, "/") + "/raw/" + branch + "/go.sum"
 
 	response, err := http.Get(url)
 	if err != nil {

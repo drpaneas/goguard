@@ -7,7 +7,7 @@ import (
 
 func cveMode() {
 	// User Input Validation
-	cve, repoURL, err := getUserInputCVEMode()
+	repoURL, branch, cve, err := getUserInputCVEMode()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -43,14 +43,13 @@ func cveMode() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
 	if debug {
 		fmt.Println("Package:", pkg)
 		fmt.Println("Fixed Version:", fixedVersion)
 	}
 
 	// Check if the repo to see if the pkg with the vulnerable version is used
-	if err := isVulnerable(repoURL, pkg, fixedVersion); err != nil {
+	if err := isVulnerable(repoURL, branch, pkg, fixedVersion); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -58,7 +57,7 @@ func cveMode() {
 
 func goMode() {
 	// User Input Validation
-	repoURL, goID, err := getUserInputGoMode()
+	repoURL, branch, goID, err := getUserInputGoMode()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -81,7 +80,7 @@ func goMode() {
 	}
 
 	// Check if the repo to see if the pkg with the vulnerable version is used
-	if err := isVulnerable(repoURL, pkg, fixedVersion); err != nil {
+	if err := isVulnerable(repoURL, branch, pkg, fixedVersion); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -89,7 +88,7 @@ func goMode() {
 
 func pkgMode() {
 	// User Input Validation
-	repoURL, pkg, fixedVersion, err := getUserInputPKGMode()
+	repoURL, branch, pkg, fixedVersion, err := getUserInputPKGMode()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -101,16 +100,16 @@ func pkgMode() {
 	}
 
 	// Check if the repo to see if the pkg with the vulnerable version is used
-	if err := isVulnerable(repoURL, pkg, fixedVersion); err != nil {
+	if err := isVulnerable(repoURL, branch, pkg, fixedVersion); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
 func errorMode() {
-	fmt.Println("Usage: ./goguard <mode> <GitHub-Repo-URL> <CVE ID>")
+	fmt.Println("Usage: ./goguard <mode> <GitHub-Repo-URL> <Branch> <CVE ID>")
 	fmt.Println(" -- Modes: cve, go, pkg --")
-	fmt.Println("  Example: goguard cve <GitHub-Repo-URL> <CVE ID>)")
-	fmt.Println("  Example: goguard go <GitHub-Repo-URL> <GOVULN ID>)")
-	fmt.Println("  Example: goguard pkg <GitHub-Repo-URL> <VULNPKG> <VULNVER>)")
+	fmt.Println("  Example: goguard cve <GitHub-Repo-URL> <Branch> <CVE ID>)")
+	fmt.Println("  Example: goguard go <GitHub-Repo-URL> <Branch> <GOVULN ID>)")
+	fmt.Println("  Example: goguard pkg <GitHub-Repo-URL> <Branch> <VULNPKG> <VULNVER>)")
 }
