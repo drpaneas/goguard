@@ -74,7 +74,7 @@ type NVDResponse struct {
 
 func checkIfCVExists(cveID string) (bool, error) {
 	// URL for the NVD API
-	url := fmt.Sprintf("https://services.nvd.nist.gov/rest/json/cve/1.0/%s", cveID)
+	url := fmt.Sprintf("https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=%s", cveID)
 
 	// Make the API request
 	resp, err := http.Get(url)

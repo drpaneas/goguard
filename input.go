@@ -42,32 +42,32 @@ func getMode() (scanMode, error) {
 // is returns the CVE ID and the GitHub URL of the Go project as strings and an error if there is one
 // it also prints the usage message if the user didn't provide the required arguments
 // it also prints an error message if the user provided an invalid CVE ID or GitHub URL that is not a GitHub URL
-func getUserInputCVEMode() (string, string, error) {
+func getUserInputCVEMode() (string, string, string, error) {
 	// this is CVEState: ./goguard cve <GitHub-Repo-URL> <CVE ID>
 	// this is GoState:  ./goguard go <GitHub-Repo-URL> <GOVULN ID>
 	// this is PKGState: ./goguard pkg <GitHub-Repo-URL> <VULNPKG> <VULNVER>
 
-	var repoURL, cve string
+	var repoURL, branch, cve string
 	var err error
-
 	// Check if the user has provided the required arguments
-	if len(os.Args) < 4 {
+	if len(os.Args) < 5 {
 		err = errors.New(fmt.Sprint("Usage: ", name, " cve <GitHub-Repo-URL> <CVE ID>"))
-		return repoURL, cve, err
+		return repoURL, branch, cve, err
 	}
 
 	// Get the user input and validate it
 	repoURL, err = validateURL(os.Args[2])
 	if err != nil {
-		return repoURL, cve, err
+		return repoURL, branch, cve, err
 	}
+	branch = os.Args[3]
 
-	cve, err = validateCVE(os.Args[3])
+	cve, err = validateCVE(os.Args[4])
 	if err != nil {
-		return repoURL, cve, err
+		return repoURL, branch, cve, err
 	}
 
-	return cve, repoURL, nil
+	return repoURL, branch, cve, nil
 }
 
 func validateURL(url string) (string, error) {
@@ -110,54 +110,57 @@ func validateCVE(cve string) (string, error) {
 	return cve, nil
 }
 
-func getUserInputGoMode() (string, string, error) {
+func getUserInputGoMode() (string, string, string, error) {
 	// this is GoState:  ./goguard go <GitHub-Repo-URL> <GOVULN ID>
 
-	var repoURL, govuln string
+	var repoURL, branch, govuln string
 	var err error
 
 	// Check if the user has provided the required arguments
 	if len(os.Args) < 4 {
 		err = errors.New(fmt.Sprint("Usage: ", name, " go <GitHub-Repo-URL> <GOVULN ID>"))
-		return repoURL, govuln, err
+		return repoURL, branch, govuln, err
 	}
 
 	// Get the user input and validate it
 	repoURL, err = validateURL(os.Args[2])
 	if err != nil {
-		return repoURL, govuln, err
+		return repoURL, branch, govuln, err
 	}
 
-	govuln = os.Args[3]
+	branch = os.Args[3]
+	govuln = os.Args[4]
+
 	re := regexp.MustCompile(`GO-[0-9]{4}-[0-9]+`)
 	match := re.FindAllString(string(govuln), -1)
 	if len(match) == 0 {
-		return repoURL, govuln, errors.New("no valid format for GOVULN ID. It must be in the format GO-YYYY-XXXX")
+		return repoURL, branch, govuln, errors.New("no valid format for GOVULN ID. It must be in the format GO-YYYY-XXXX")
 	}
 
-	return repoURL, govuln, nil
+	return repoURL, branch, govuln, nil
 }
 
-func getUserInputPKGMode() (string, string, string, error) {
+func getUserInputPKGMode() (string, string, string, string, error) {
 	// this is PKGState: ./goguard pkg <GitHub-Repo-URL> <VULNPKG> <VULNVER>
 
-	var repoURL, vulnpkg, vulnver string
+	var repoURL, branch, vulnpkg, vulnver string
 	var err error
 
 	// Check if the user has provided the required arguments
 	if len(os.Args) < 5 {
 		err = errors.New(fmt.Sprint("Usage: ", name, " pkg <GitHub-Repo-URL> <VULNPKG> <VULNVER>"))
-		return repoURL, vulnpkg, vulnver, err
+		return repoURL, branch, vulnpkg, vulnver, err
 	}
 
 	// Get the user input and validate it
 	repoURL, err = validateURL(os.Args[2])
 	if err != nil {
-		return repoURL, vulnpkg, vulnver, err
+		return repoURL, branch, vulnpkg, vulnver, err
 	}
 
-	vulnpkg = os.Args[3]
-	vulnver = os.Args[4]
+	branch = os.Args[3]
+	vulnpkg = os.Args[4]
+	vulnver = os.Args[5]
 
 	// Validate the version
 	if err != isValidGoSemver(vulnver) {
@@ -166,9 +169,9 @@ func getUserInputPKGMode() (string, string, string, error) {
 		// Try to fix it by adding the "v" prefix and check again
 		vulnver = "v" + vulnver
 		if err != isValidGoSemver(vulnver) {
-			return repoURL, vulnpkg, vulnver, errors.New("invalid version format. It must be in the format v1.1.1")
+			return repoURL, branch, vulnpkg, vulnver, errors.New("invalid version format. It must be in the format v1.1.1")
 		}
 	}
 
-	return repoURL, vulnpkg, vulnver, nil
+	return repoURL, branch, vulnpkg, vulnver, nil
 }

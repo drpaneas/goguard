@@ -4,16 +4,17 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"golang.org/x/mod/semver"
 	"io"
 	"net/http"
 	"strings"
+
+	"golang.org/x/mod/semver"
 )
 
-func isVulnerable(repoURL, vulnPackage, fixedVersion string) error {
+func isVulnerable(repoURL, branch, vulnPackage, fixedVersion string) error {
 	// Replace with the link to the go.mod file on GitHub
 	// url := repoURL + "/raw/master/go.mod"
-	url := strings.TrimSuffix(repoURL, "/") + "/raw/master/go.mod"
+	url := strings.TrimSuffix(repoURL, "/") + "/raw/" + branch + "/go.mod"
 
 	response, err := http.Get(url)
 	if err != nil {
@@ -135,11 +136,13 @@ func isVulnerable(repoURL, vulnPackage, fixedVersion string) error {
 		fmt.Printf("Direct dependency check: [SAFE] Vulnerable Package %s is NOT found in go.mod file\n", vulnPackage)
 	}
 
+	//fmt.Println(vulnPackage)
+
 	// Indirect dependency check
 
 	// First check the go.sum file
 	// If the vulnerable package is found in the go.sum file, then it's vulnerable and we will analyze this using the go mod graph command
-	isGoSumVulnerable, vulnGoSumList, err := checkSum(repoURL, vulnPackage, fixedVersion)
+	isGoSumVulnerable, vulnGoSumList, err := checkSum(repoURL, branch, vulnPackage, fixedVersion)
 	if err != nil {
 		fmt.Println(err)
 		return err

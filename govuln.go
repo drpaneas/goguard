@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"golang.org/x/mod/semver"
 	"io"
 	"net/http"
 	"os"
+
+	"golang.org/x/mod/semver"
 )
 
 type CVE struct {
