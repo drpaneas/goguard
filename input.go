@@ -43,15 +43,15 @@ func getMode() (scanMode, error) {
 // it also prints the usage message if the user didn't provide the required arguments
 // it also prints an error message if the user provided an invalid CVE ID or GitHub URL that is not a GitHub URL
 func getUserInputCVEMode() (string, string, string, error) {
-	// this is CVEState: ./goguard cve <GitHub-Repo-URL> <CVE ID>
-	// this is GoState:  ./goguard go <GitHub-Repo-URL> <GOVULN ID>
-	// this is PKGState: ./goguard pkg <GitHub-Repo-URL> <VULNPKG> <VULNVER>
+	// this is CVEState: ./goguard cve <GitHub-Repo-URL> <BRANCH> <CVE ID>
+	// this is GoState:  ./goguard go <GitHub-Repo-URL> <BRANCH> <GOVULN ID>
+	// this is PKGState: ./goguard pkg <GitHub-Repo-URL> <BRANCH> <VULNPKG> <VULNVER>
 
 	var repoURL, branch, cve string
 	var err error
 	// Check if the user has provided the required arguments
 	if len(os.Args) < 5 {
-		err = errors.New(fmt.Sprint("Usage: ", name, " cve <GitHub-Repo-URL> <CVE ID>"))
+		err = errors.New(fmt.Sprint("Usage: ", name, " cve <GitHub-Repo-URL> <BRANCH> <CVE ID>"))
 		return repoURL, branch, cve, err
 	}
 
@@ -117,8 +117,8 @@ func getUserInputGoMode() (string, string, string, error) {
 	var err error
 
 	// Check if the user has provided the required arguments
-	if len(os.Args) < 4 {
-		err = errors.New(fmt.Sprint("Usage: ", name, " go <GitHub-Repo-URL> <GOVULN ID>"))
+	if len(os.Args) < 5 {
+		err = errors.New(fmt.Sprint("Usage: ", name, " go <GitHub-Repo-URL> <BRANCH> <GOVULN ID>"))
 		return repoURL, branch, govuln, err
 	}
 
@@ -147,8 +147,8 @@ func getUserInputPKGMode() (string, string, string, string, error) {
 	var err error
 
 	// Check if the user has provided the required arguments
-	if len(os.Args) < 5 {
-		err = errors.New(fmt.Sprint("Usage: ", name, " pkg <GitHub-Repo-URL> <VULNPKG> <VULNVER>"))
+	if len(os.Args) < 6 {
+		err = errors.New(fmt.Sprint("Usage: ", name, " pkg <GitHub-Repo-URL> <BRANCH> <VULNPKG> <VULNVER>"))
 		return repoURL, branch, vulnpkg, vulnver, err
 	}
 
