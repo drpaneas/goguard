@@ -31,7 +31,7 @@ go mod tidy
 1. To install GoGuard, you need to have Go installed on your machine. Once you have Go, you can install GoGuard by running the following command:
 
 ```bash
-go install github.com/drpaneas/GoGuard
+go install github.com/drpaneas/GoGuard@latest
 ```
 
 2. You also need docker installed, up and running.
