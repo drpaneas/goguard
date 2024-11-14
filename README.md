@@ -26,13 +26,12 @@ go mod edit -replace gopkg.in/yaml.v2=gopkg.in/yaml.v2@v2.4.0
 go mod tidy
 ```
 
-
 ## Installation
 
 1. To install GoGuard, you need to have Go installed on your machine. Once you have Go, you can install GoGuard by running the following command:
 
 ```bash
-go install github.com/drpaneas/GoGuard
+go install github.com/drpaneas/GoGuard@latest
 ```
 
 2. You also need docker installed, up and running.
@@ -80,3 +79,4 @@ Use it at your own risk and always verify the information provided with the orig
 [NVD]: https://nvd.nist.gov/
 [OSVDB]: https://osv.dev/
 [Go Vulnerability Database]: https://pkg.go.dev/vuln/
+
