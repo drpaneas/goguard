@@ -26,7 +26,6 @@ go mod edit -replace gopkg.in/yaml.v2=gopkg.in/yaml.v2@v2.4.0
 go mod tidy
 ```
 
-
 ## Installation
 
 1. To install GoGuard, you need to have Go installed on your machine. Once you have Go, you can install GoGuard by running the following command:
@@ -50,17 +49,17 @@ you can run the following command:
 ```bash
 Usage: ./goguard <mode> <GitHub-Repo-URL> <CVE ID>
  -- Modes: cve, go, pkg --
-  Example: goguard cve <GitHub-Repo-URL> <CVE ID>)
-  Example: goguard go <GitHub-Repo-URL> <GOVULN ID>)
-  Example: goguard pkg <GitHub-Repo-URL> <VULNPKG> <VULNVER>)
+  Example: goguard cve <GitHub-Repo-URL> <BRANCH> <CVE ID>)
+  Example: goguard go <GitHub-Repo-URL> <BRANCH> <GOVULN ID>)
+  Example: goguard pkg <GitHub-Repo-URL> <BRANCH> <VULNPKG> <VULNVER>)
 ```
 
 For example:
 
 ```bash
-goguard cve https://github.com/user/repo CVE-2021-4238
-goguard go https://github.com/user/repo GO-2022-0411
-goguard pkg https://github.com/user/repo 'goutils' '1.0'
+goguard cve https://github.com/user/repo main CVE-2021-4238
+goguard go https://github.com/user/repo main GO-2022-0411
+goguard pkg https://github.com/user/repo main 'goutils' '1.0'
 ```
 
 This command will check if the GitHub repository `https://github.com/user/repo` is vulnerable against the CVE `CVE-2021-4238`.
